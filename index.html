@@ -566,6 +566,9 @@
       const campusBox = new THREE.Box3();
       let hasCampusMeshes = false;
 
+      const totalBox = new THREE.Box3().setFromObject(currentModel);
+      const totalSize = totalBox.getSize(new THREE.Vector3());
+
       currentModel.traverse((node) => {
         if (node.isMesh) {
           meshCount++;
@@ -575,11 +578,11 @@
           node.castShadow = true;
           node.receiveShadow = true;
 
-          // Hide giant outer terrain/satellite planes that block the campus view
+          // Hide giant outer terrain/satellite planes (>40% of total scene width/depth)
           const nBox = new THREE.Box3().setFromObject(node);
           const nSize = nBox.getSize(new THREE.Vector3());
           const nName = (node.name || '').toLowerCase();
-          const isGiantPlane = (nSize.x > 2000 || nSize.z > 2000) && (nSize.y < Math.max(nSize.x, nSize.z) * 0.25);
+          const isGiantPlane = (nSize.x > totalSize.x * 0.4 && nSize.z > totalSize.z * 0.4);
           if (isGiantPlane || nName.includes('terrain') || nName.includes('google_sat')) {
             node.visible = false;
           } else {
