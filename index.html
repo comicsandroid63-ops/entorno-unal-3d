@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entorno 3D - UNAL</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* Top Bar */
+    header {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .header-card {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 10px 18px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      background: #2563eb;
+      color: white;
+      padding: 2px 7px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    /* Floating Toolbar */
+    .toolbar {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(14px);
+      padding: 8px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      z-index: 10;
+    }
+    .tool-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .tool-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+    .tool-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    /* Instructions & Info box */
+    .help-card {
+      position: absolute;
+      bottom: 24px;
+      right: 20px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.5;
+      z-index: 9;
+      pointer-events: none;
+    }
+    .help-card b {
+      color: #e2e8f0;
+    }
+
+    /* Loading Screen */
+    #loader {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      transition: opacity 0.5s ease;
+    }
+    #loader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top-color: #3b82f6;
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .progress-bar-container {
+      width: 260px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3b82f6, #60a5fa);
+      transition: width 0.2s ease;
+    }
+    .loading-status {
+      font-size: 14px;
+      font-weight: 500;
+      color: #e2e8f0;
+    }
+    .loading-details {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 6px;
+    }
+
+    /* Drag & Drop Overlay Alert */
+    #drop-prompt {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px dashed rgba(59, 130, 246, 0.5);
+      padding: 30px 40px;
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+      display: none;
+      z-index: 50;
+      max-width: 420px;
+    }
+    #drop-prompt h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    #drop-prompt p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+    .upload-btn {
+      display: inline-block;
+      background: #2563eb;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .upload-btn:hover {
+      background: #1d4ed8;
+    }
+    input[type="file"] {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      .help-card { display: none; }
+      .toolbar { width: 92%; justify-content: center; flex-wrap: wrap; }
+      .header-card { padding: 8px 14px; }
+      .title { font-size: 14px; }
+    }
+  </style>
+
+  <!-- Import maps polyfill for Three.js ES Modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <div id="canvas-container"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-card">
+      <div class="title">
+        <span>Campus UNAL</span>
+        <span class="badge">3D WebGL</span>
+      </div>
+      <div class="subtitle" id="stats-info">Cargando entorno 3D...</div>
+    </div>
+  </header>
+
+  <!-- Floating Toolbar -->
+  <div class="toolbar">
+    <button class="tool-btn" id="btn-reset" title="Reiniciar vista">🔄 Vista inicial</button>
+    <button class="tool-btn" id="btn-top" title="Vista aérea / Cenital">🧭 Vista Aérea</button>
+    <button class="tool-btn" id="btn-rotate" title="Girar automáticamente">🌀 Auto-rotar</button>
+    <button class="tool-btn" id="btn-wireframe" title="Modo malla">📐 Malla</button>
+    <button class="tool-btn" id="btn-light" title="Alternar iluminación">☀️ Luz Día</button>
+    <button class="tool-btn" id="btn-fullscreen" title="Pantalla completa">⛶ Pantalla completa</button>
+  </div>
+
+  <!-- Mouse / Touch Help -->
+  <div class="help-card">
+    <div>🖱️ <b>Girar:</b> Clic izquierdo + arrastrar</div>
+    <div>✋ <b>Mover:</b> Clic derecho + arrastrar</div>
+    <div>🔍 <b>Zoom:</b> Rueda del mouse / Pellizcar</div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <div class="loading-status" id="load-text">Cargando modelo 3D...</div>
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="load-bar"></div>
+    </div>
+    <div class="loading-details" id="load-details">Descargando geometría y texturas</div>
+  </div>
+
+  <!-- Fallback Drop Prompt (if Unal.glb is not present yet) -->
+  <div id="drop-prompt">
+    <h3>Arrastra tu archivo 3D (.glb)</h3>
+    <p>Coloca tu archivo <code>Unal.glb</code> en esta carpeta o selecciónalo para previsualizarlo de inmediato.</p>
+    <label class="upload-btn" for="manual-file-input">Seleccionar archivo .glb</label>
+    <input type="file" id="manual-file-input" accept=".glb,.gltf">
+  </div>
+
+  <!-- Main Three.js Application Logic -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+    // Application State
+    let scene, camera, renderer, controls;
+    let currentModel = null;
+    let autoRotate = false;
+    let isWireframe = false;
+    let lightMode = 0; // 0: Day, 1: Sunset, 2: Dark
+    let initialCameraState = { pos: null, target: null };
+
+    const MODEL_PATH = 'Unal.glb'; // Default relative path for GitHub Pages
+
+    // UI Elements
+    const container = document.getElementById('canvas-container');
+    const loaderEl = document.getElementById('loader');
+    const loadBar = document.getElementById('load-bar');
+    const loadText = document.getElementById('load-text');
+    const loadDetails = document.getElementById('load-details');
+    const statsInfo = document.getElementById('stats-info');
+    const dropPrompt = document.getElementById('drop-prompt');
+    const fileInput = document.getElementById('manual-file-input');
+
+    const btnReset = document.getElementById('btn-reset');
+    const btnTop = document.getElementById('btn-top');
+    const btnRotate = document.getElementById('btn-rotate');
+    const btnWireframe = document.getElementById('btn-wireframe');
+    const btnLight = document.getElementById('btn-light');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+
+    // Lights
+    let hemiLight, dirLight, ambientLight;
+
+    function init() {
+      // 1. Scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      scene.fog = new THREE.FogExp2(0x0f172a, 0.001);
+
+      // 2. Camera
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
+      camera.position.set(100, 100, 150);
+
+      // 3. Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      // 4. Controls
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.screenSpacePanning = true;
+      controls.maxPolarAngle = Math.PI / 2 + 0.05; // Prevent camera going deeply underground
+
+      // 5. Lighting Setup
+      setupLights();
+
+      // 6. Grid Helper (subtle floor grid for orientation)
+      const grid = new THREE.GridHelper(500, 50, 0x334155, 0x1e293b);
+      grid.position.y = -0.1;
+      scene.add(grid);
+
+      // 7. Event Listeners
+      window.addEventListener('resize', onWindowResize);
+      setupEvents();
+
+      // 8. Load Model
+      load3DModel(MODEL_PATH);
+
+      // 9. Animation Loop
+      animate();
+    }
+
+    function setupLights() {
+      ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+
+      hemiLight = new THREE.HemisphereLight(0xffffff, 0x334155, 0.7);
+      hemiLight.position.set(0, 200, 0);
+      scene.add(hemiLight);
+
+      dirLight = new THREE.DirectionalLight(0xfffaed, 1.4);
+      dirLight.position.set(150, 250, 150);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.camera.near = 10;
+      dirLight.shadow.camera.far = 1000;
+      const d = 300;
+      dirLight.shadow.camera.left = -d;
+      dirLight.shadow.camera.right = d;
+      dirLight.shadow.camera.top = d;
+      dirLight.shadow.camera.bottom = -d;
+      dirLight.shadow.bias = -0.0005;
+      scene.add(dirLight);
+    }
+
+    function setupEvents() {
+      // Toolbar Buttons
+      btnReset.addEventListener('click', () => {
+        if (initialCameraState.pos && initialCameraState.target) {
+          camera.position.copy(initialCameraState.pos);
+          controls.target.copy(initialCameraState.target);
+          controls.update();
+        }
+      });
+
+      btnTop.addEventListener('click', () => {
+        if (currentModel) {
+          const box = new THREE.Box3().setFromObject(currentModel);
+          const center = box.getCenter(new THREE.Vector3());
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.z);
+          camera.position.set(center.x, center.y + maxDim * 1.5, center.z + 0.01);
+          controls.target.copy(center);
+          controls.update();
+        }
+      });
+
+      btnRotate.addEventListener('click', () => {
+        autoRotate = !autoRotate;
+        controls.autoRotate = autoRotate;
+        controls.autoRotateSpeed = 1.5;
+        btnRotate.classList.toggle('active', autoRotate);
+      });
+
+      btnWireframe.addEventListener('click', () => {
+        isWireframe = !isWireframe;
+        btnWireframe.classList.toggle('active', isWireframe);
+        if (currentModel) {
+          currentModel.traverse((node) => {
+            if (node.isMesh && node.material) {
+              if (Array.isArray(node.material)) {
+                node.material.forEach(m => m.wireframe = isWireframe);
+              } else {
+                node.material.wireframe = isWireframe;
+              }
+            }
+          });
+        }
+      });
+
+      btnLight.addEventListener('click', () => {
+        lightMode = (lightMode + 1) % 3;
+        if (lightMode === 0) { // Day
+          scene.background.setHex(0x0f172a);
+          dirLight.color.setHex(0xfffaed);
+          dirLight.intensity = 1.4;
+          hemiLight.intensity = 0.7;
+          btnLight.innerText = '☀️ Luz Día';
+        } else if (lightMode === 1) { // Sunset
+          scene.background.setHex(0x271924);
+          dirLight.color.setHex(0xff9a5c);
+          dirLight.intensity = 1.6;
+          hemiLight.intensity = 0.5;
+          btnLight.innerText = '🌅 Atardecer';
+        } else { // Dark / Night
+          scene.background.setHex(0x020617);
+          dirLight.color.setHex(0x7dd3fc);
+          dirLight.intensity = 0.4;
+          hemiLight.intensity = 0.3;
+          btnLight.innerText = '🌙 Noche';
+        }
+      });
+
+      btnFullscreen.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      });
+
+      // Drag and Drop & Manual File Picker
+      window.addEventListener('dragover', (e) => e.preventDefault());
+      window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf'))) {
+          loadModelFromFile(file);
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) loadModelFromFile(file);
+      });
+    }
+
+    function createLoader() {
+      const gltfLoader = new GLTFLoader();
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+      gltfLoader.setDRACOLoader(dracoLoader);
+      return gltfLoader;
+    }
+
+    function load3DModel(url) {
+      const loader = createLoader();
+      loaderEl.classList.remove('hidden');
+      loadText.innerText = "Cargando modelo 3D...";
+      loadBar.style.width = '10%';
+
+      loader.load(
+        url,
+        (gltf) => {
+          onModelLoaded(gltf.scene);
+        },
+        (xhr) => {
+          if (xhr.lengthComputable && xhr.total > 0) {
+            const percent = Math.round((xhr.loaded / xhr.total) * 100);
+            loadBar.style.width = `${percent}%`;
+            loadDetails.innerText = `${(xhr.loaded / (1024*1024)).toFixed(1)} MB / ${(xhr.total / (1024*1024)).toFixed(1)} MB (${percent}%)`;
+          } else {
+            const mb = (xhr.loaded / (1024 * 1024)).toFixed(1);
+            loadDetails.innerText = `Descargado: ${mb} MB...`;
+          }
+        },
+        (error) => {
+          console.warn("No se encontró el archivo local por defecto:", error);
+          loaderEl.classList.add('hidden');
+          statsInfo.innerText = "Esperando archivo Unal.glb...";
+          dropPrompt.style.display = 'block';
+        }
+      );
+    }
+
+    function loadModelFromFile(file) {
+      dropPrompt.style.display = 'none';
+      loaderEl.classList.remove('hidden');
+      loadText.innerText = `Cargando ${file.name}...`;
+      loadBar.style.width = '30%';
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const contents = e.target.result;
+        const loader = createLoader();
+        loader.parse(contents, '', (gltf) => {
+          onModelLoaded(gltf.scene, file.name);
+        }, (err) => {
+          alert('Error al leer el archivo 3D: ' + err.message);
+          loaderEl.classList.add('hidden');
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function onModelLoaded(model, name = 'Unal.glb') {
+      if (currentModel) {
+        scene.remove(currentModel);
+      }
+      currentModel = model;
+
+      let meshCount = 0;
+      let vertexCount = 0;
+
+      currentModel.traverse((node) => {
+        if (node.isMesh) {
+          meshCount++;
+          if (node.geometry) {
+            vertexCount += node.geometry.attributes.position ? node.geometry.attributes.position.count : 0;
+          }
+          node.castShadow = true;
+          node.receiveShadow = true;
+        }
+      });
+
+      // Frame & center model
+      const box = new THREE.Box3().setFromObject(currentModel);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+
+      // Adjust camera distance nicely
+      const fov = camera.fov * (Math.PI / 180);
+      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
+      cameraZ = Math.max(cameraZ, 10);
+
+      camera.position.set(center.x + cameraZ * 0.7, center.y + cameraZ * 0.5, center.z + cameraZ * 0.7);
+      camera.lookAt(center);
+      controls.target.copy(center);
+      controls.maxDistance = cameraZ * 6;
+      controls.minDistance = maxDim * 0.05;
+      controls.update();
+
+      initialCameraState.pos = camera.position.clone();
+      initialCameraState.target = controls.target.clone();
+
+      scene.add(currentModel);
+
+      // Update UI
+      loaderEl.classList.add('hidden');
+      dropPrompt.style.display = 'none';
+      statsInfo.innerText = `${name} | ${meshCount} mallas | ${(vertexCount / 1000).toFixed(0)}k vértices`;
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    init();
+  </script>
+</body>
+</html>
