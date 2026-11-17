@@ -566,8 +566,11 @@
       const campusBox = new THREE.Box3();
       let hasCampusMeshes = false;
 
-      const totalBox = new THREE.Box3().setFromObject(currentModel);
-      const totalSize = totalBox.getSize(new THREE.Vector3());
+      const hiddenNames = new Set([
+        'Estructura_Muros', 'Perfil_Carretera', 'Plane',
+        'Profesores.002', 'Profesores.005', 'Profesores.006', 'Profesores.007', 'Profesores.008',
+        'Roads.001', 'Roads_Perfecta_Texturizable.002', 'terrain', 'Terrain'
+      ]);
 
       currentModel.traverse((node) => {
         if (node.isMesh) {
@@ -578,12 +581,10 @@
           node.castShadow = true;
           node.receiveShadow = true;
 
-          // Hide giant outer terrain/satellite planes (>40% of total scene width/depth)
-          const nBox = new THREE.Box3().setFromObject(node);
-          const nSize = nBox.getSize(new THREE.Vector3());
-          const nName = (node.name || '').toLowerCase();
-          const isGiantPlane = (nSize.x > totalSize.x * 0.4 && nSize.z > totalSize.z * 0.4);
-          if (isGiantPlane || nName.includes('terrain') || nName.includes('google_sat')) {
+          // Hide exact objects that were hidden in Blender
+          const nName = node.name || '';
+          const pName = (node.parent && node.parent.name) ? node.parent.name : '';
+          if (hiddenNames.has(nName) || hiddenNames.has(pName)) {
             node.visible = false;
           } else {
             campusBox.expandByObject(node);
