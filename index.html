@@ -340,10 +340,9 @@
       // 1. Scene
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0f172a);
-      scene.fog = new THREE.FogExp2(0x0f172a, 0.001);
 
       // 2. Camera
-      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000000);
       camera.position.set(100, 100, 150);
 
       // 3. Renderer
@@ -576,22 +575,28 @@
         }
       });
 
-      // Frame & center model
+      // Frame & center model at origin (0, 0, 0)
       const box = new THREE.Box3().setFromObject(currentModel);
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z);
+      currentModel.position.sub(center);
 
-      // Adjust camera distance nicely
+      const maxDim = Math.max(size.x, size.y, size.z, 1);
+
+      // Adjust camera clipping planes & distance dynamically
+      camera.near = Math.max(0.1, maxDim * 0.0005);
+      camera.far = maxDim * 20;
+      camera.updateProjectionMatrix();
+
       const fov = camera.fov * (Math.PI / 180);
-      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
+      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.3;
       cameraZ = Math.max(cameraZ, 10);
 
-      camera.position.set(center.x + cameraZ * 0.7, center.y + cameraZ * 0.5, center.z + cameraZ * 0.7);
-      camera.lookAt(center);
-      controls.target.copy(center);
-      controls.maxDistance = cameraZ * 6;
-      controls.minDistance = maxDim * 0.05;
+      camera.position.set(cameraZ * 0.7, cameraZ * 0.5, cameraZ * 0.7);
+      camera.lookAt(0, 0, 0);
+      controls.target.set(0, 0, 0);
+      controls.maxDistance = maxDim * 8;
+      controls.minDistance = maxDim * 0.01;
       controls.update();
 
       initialCameraState.pos = camera.position.clone();
