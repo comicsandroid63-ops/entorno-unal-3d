@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Entorno 3D - UNAL</title>
   <style>
     * {
@@ -10,11 +10,14 @@
       margin: 0;
       padding: 0;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
     body, html {
       width: 100%;
       height: 100%;
       overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
       font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #090d16;
       color: #f8fafc;
@@ -25,6 +28,7 @@
       height: 100%;
       position: absolute;
       inset: 0;
+      touch-action: none;
     }
 
     /* Minimalist Top Bar */
@@ -120,7 +124,8 @@
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
     }
     .help-wrap:hover .help-card,
-    .help-wrap:focus-within .help-card {
+    .help-wrap:focus-within .help-card,
+    .help-wrap.open .help-card {
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
@@ -310,11 +315,25 @@
     }
 
     @media (max-width: 640px) {
-      .help-wrap { display: none; }
-      .toolbar { max-width: 94%; overflow-x: auto; }
+      header { top: max(14px, env(safe-area-inset-top)); left: 12px; right: 12px; }
+      .header-card { padding: 6px 11px; max-width: calc(100vw - 70px); }
+      .subtitle { display: none; }
+      .divider-v { display: none; }
+      .help-btn { width: 38px; height: 38px; }
+      .toolbar {
+        bottom: max(16px, env(safe-area-inset-bottom));
+        max-width: calc(100vw - 24px);
+        padding: 5px 6px;
+        gap: 3px;
+      }
+      .tool-btn {
+        min-width: 44px;
+        min-height: 44px;
+        justify-content: center;
+        padding: 10px 12px;
+      }
+      .tool-btn svg { width: 17px; height: 17px; }
       .tool-btn span { display: none; }
-      .tool-btn { padding: 9px 11px; }
-      .header-card { padding: 7px 12px; }
     }
   </style>
 
@@ -346,9 +365,9 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       </button>
       <div class="help-card">
-        <div><b>Girar:</b> Clic izq. + arrastrar</div>
-        <div><b>Mover:</b> Clic der. + arrastrar</div>
-        <div><b>Zoom:</b> Rueda / Pellizcar</div>
+        <div><b>1 dedo / Clic izq.:</b> Girar</div>
+        <div><b>2 dedos / Clic der.:</b> Mover</div>
+        <div><b>Pellizcar / Rueda:</b> Zoom</div>
       </div>
     </div>
   </header>
@@ -446,21 +465,29 @@
       camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000000);
       camera.position.set(100, 100, 150);
 
-      // 3. Renderer
+      // 3. Renderer (tuned pixel ratio for smooth 60fps on Android GPUs)
+      const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isTouchDevice ? 1.5 : 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.1;
-      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.enabled = !isTouchDevice;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
-      // 4. Controls
+      // 4. Controls (optimized multi-touch gestures for Android)
       controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
+      controls.dampingFactor = 0.06;
       controls.screenSpacePanning = true;
+      controls.rotateSpeed = isTouchDevice ? 0.75 : 1.0;
+      controls.panSpeed = isTouchDevice ? 0.9 : 1.0;
+      controls.zoomSpeed = isTouchDevice ? 1.15 : 1.0;
+      controls.touches = {
+        ONE: THREE.TOUCH.ROTATE,
+        TWO: THREE.TOUCH.DOLLY_PAN
+      };
       controls.maxPolarAngle = Math.PI / 2 + 0.05; // Prevent camera going deeply underground
 
       // 6. Lighting Setup
@@ -502,6 +529,19 @@
     }
 
     function setupEvents() {
+      // Touch-friendly help toggle
+      const helpWrap = document.querySelector('.help-wrap');
+      const helpBtn = document.querySelector('.help-btn');
+      if (helpBtn && helpWrap) {
+        helpBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          helpWrap.classList.toggle('open');
+        });
+        document.addEventListener('pointerdown', (e) => {
+          if (!helpWrap.contains(e.target)) helpWrap.classList.remove('open');
+        });
+      }
+
       // Toolbar Buttons
       btnReset.addEventListener('click', () => {
         if (initialCameraState.pos && initialCameraState.target) {
