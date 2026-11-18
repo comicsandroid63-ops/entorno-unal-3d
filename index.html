@@ -117,8 +117,8 @@
     /* Instructions & Info box */
     .help-card {
       position: absolute;
-      bottom: 24px;
-      right: 20px;
+      top: 16px;
+      right: 16px;
       background: rgba(15, 23, 42, 0.75);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -237,48 +237,6 @@
       .header-card { padding: 8px 14px; }
       .title { font-size: 14px; }
     }
-
-    /* Alignment Calibration Panel */
-    #align-panel {
-      position: absolute;
-      top: 84px;
-      right: 16px;
-      width: 270px;
-      background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 14px;
-      padding: 14px;
-      z-index: 20;
-      display: none;
-      font-size: 12px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-    }
-    #align-panel.open { display: block; }
-    #align-panel h4 {
-      font-size: 13px;
-      margin-bottom: 10px;
-      color: #f8fafc;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .align-group {
-      margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .align-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-    .align-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 5px;
-      gap: 8px;
-    }
-    .align-row label { color: #cbd5e1; min-width: 64px; }
-    .align-row input[type="range"] { flex: 1; accent-color: #3b82f6; }
-    .align-val { color: #60a5fa; font-family: monospace; min-width: 42px; text-align: right; }
   </style>
 
   <!-- Import maps polyfill for Three.js ES Modules -->
@@ -313,29 +271,7 @@
     <button class="tool-btn" id="btn-rotate" title="Girar automáticamente">🌀 Auto-rotar</button>
     <button class="tool-btn" id="btn-wireframe" title="Modo malla">📐 Malla</button>
     <button class="tool-btn" id="btn-light" title="Alternar iluminación">☀️ Luz Día</button>
-    <button class="tool-btn" id="btn-align" title="Calibrar alineación">🎛️ Calibrar</button>
     <button class="tool-btn" id="btn-fullscreen" title="Pantalla completa">⛶ Pantalla completa</button>
-  </div>
-
-  <!-- Calibration Panel -->
-  <div id="align-panel">
-    <h4>
-      <span>Calibrar Capas</span>
-      <button id="btn-close-align" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;">✕</button>
-    </h4>
-    <div class="align-group">
-      <strong style="color:#93c5fd;">🗺️ Imagen Satelital en Terreno</strong>
-      <div class="align-row"><label>Mover X</label><input type="range" id="sat-off-x" min="-1" max="1" step="0.01" value="0"><span class="align-val" id="val-sat-x">0.00</span></div>
-      <div class="align-row"><label>Mover Z</label><input type="range" id="sat-off-z" min="-1" max="1" step="0.01" value="0"><span class="align-val" id="val-sat-z">0.00</span></div>
-      <div class="align-row"><label>Escala</label><input type="range" id="sat-scale" min="0.3" max="3" step="0.02" value="1"><span class="align-val" id="val-sat-s">1.00</span></div>
-    </div>
-    <div class="align-group">
-      <strong style="color:#fcd34d;">🏢 Edificios</strong>
-      <div class="align-row"><label>Mover X</label><input type="range" id="bld-off-x" min="-800" max="800" step="2" value="0"><span class="align-val" id="val-bld-x">0</span></div>
-      <div class="align-row"><label>Mover Z</label><input type="range" id="bld-off-z" min="-800" max="800" step="2" value="0"><span class="align-val" id="val-bld-z">0</span></div>
-      <div class="align-row"><label>Altura Y</label><input type="range" id="bld-off-y" min="-300" max="300" step="1" value="0"><span class="align-val" id="val-bld-y">0</span></div>
-      <div class="align-row"><label>Escala</label><input type="range" id="bld-scale" min="0.2" max="2" step="0.02" value="1"><span class="align-val" id="val-bld-s">1.00</span></div>
-    </div>
   </div>
 
   <!-- Mouse / Touch Help -->
@@ -395,17 +331,10 @@
     const btnRotate = document.getElementById('btn-rotate');
     const btnWireframe = document.getElementById('btn-wireframe');
     const btnLight = document.getElementById('btn-light');
-    const btnAlign = document.getElementById('btn-align');
-    const btnCloseAlign = document.getElementById('btn-close-align');
-    const alignPanel = document.getElementById('align-panel');
     const btnFullscreen = document.getElementById('btn-fullscreen');
 
-    // Layer references for live calibration
+    // Layer references
     let terrainMeshRef = null;
-    let terrainBaseUVs = null;
-    let buildingsRefs = [];
-    let buildingsBasePos = [];
-    let buildingsBaseScale = [];
 
     // Lights
     let hemiLight, dirLight, ambientLight;
@@ -436,13 +365,8 @@
       controls.screenSpacePanning = true;
       controls.maxPolarAngle = Math.PI / 2 + 0.05; // Prevent camera going deeply underground
 
-      // 5. Lighting Setup
+      // 6. Lighting Setup
       setupLights();
-
-      // 6. Grid Helper (subtle floor grid for orientation)
-      const grid = new THREE.GridHelper(500, 50, 0x334155, 0x1e293b);
-      grid.position.y = -0.1;
-      scene.add(grid);
 
       // 7. Event Listeners
       window.addEventListener('resize', onWindowResize);
@@ -491,12 +415,12 @@
 
       btnTop.addEventListener('click', () => {
         if (currentModel) {
-          const box = new THREE.Box3();
-          currentModel.traverse(n => { if (n.isMesh && n.visible) box.expandByObject(n); });
+          const focusObj = terrainMeshRef || currentModel;
+          const box = new THREE.Box3().setFromObject(focusObj);
           const center = box.getCenter(new THREE.Vector3());
           const size = box.getSize(new THREE.Vector3());
           const maxDim = Math.max(size.x, size.z, 100);
-          camera.position.set(center.x, center.y + maxDim * 1.15, center.z + 0.1);
+          camera.position.set(center.x, center.y + maxDim * 0.95, center.z + 0.1);
           camera.lookAt(center);
           controls.target.copy(center);
           controls.update();
@@ -547,56 +471,6 @@
           hemiLight.intensity = 0.3;
           btnLight.innerText = '🌙 Noche';
         }
-      });
-
-      btnAlign.addEventListener('click', () => {
-        alignPanel.classList.toggle('open');
-        btnAlign.classList.toggle('active', alignPanel.classList.contains('open'));
-      });
-      btnCloseAlign.addEventListener('click', () => {
-        alignPanel.classList.remove('open');
-        btnAlign.classList.remove('active');
-      });
-
-      const updateSatUVs = () => {
-        if (!terrainMeshRef || !terrainBaseUVs) return;
-        const ox = parseFloat(document.getElementById('sat-off-x').value);
-        const oz = parseFloat(document.getElementById('sat-off-z').value);
-        const sc = parseFloat(document.getElementById('sat-scale').value);
-        document.getElementById('val-sat-x').innerText = ox.toFixed(2);
-        document.getElementById('val-sat-z').innerText = oz.toFixed(2);
-        document.getElementById('val-sat-s').innerText = sc.toFixed(2);
-        const uvAttr = terrainMeshRef.geometry.attributes.uv;
-        for (let i = 0; i < uvAttr.count; i++) {
-          const u0 = terrainBaseUVs[i * 2] - 0.5;
-          const v0 = terrainBaseUVs[i * 2 + 1] - 0.5;
-          uvAttr.setXY(i, (u0 / sc) + 0.5 + ox, (v0 / sc) + 0.5 + oz);
-        }
-        uvAttr.needsUpdate = true;
-      };
-
-      const updateBuildingsTransform = () => {
-        const bx = parseFloat(document.getElementById('bld-off-x').value);
-        const bz = parseFloat(document.getElementById('bld-off-z').value);
-        const by = parseFloat(document.getElementById('bld-off-y').value);
-        const bs = parseFloat(document.getElementById('bld-scale').value);
-        document.getElementById('val-bld-x').innerText = bx;
-        document.getElementById('val-bld-z').innerText = bz;
-        document.getElementById('val-bld-y').innerText = by;
-        document.getElementById('val-bld-s').innerText = bs.toFixed(2);
-        buildingsRefs.forEach((node, idx) => {
-          const bp = buildingsBasePos[idx];
-          const bsc = buildingsBaseScale[idx];
-          node.position.set(bp.x + bx, bp.y + by, bp.z + bz);
-          node.scale.set(bsc.x * bs, bsc.y * bs, bsc.z * bs);
-        });
-      };
-
-      ['sat-off-x', 'sat-off-z', 'sat-scale'].forEach(id => {
-        document.getElementById(id).addEventListener('input', updateSatUVs);
-      });
-      ['bld-off-x', 'bld-off-z', 'bld-off-y', 'bld-scale'].forEach(id => {
-        document.getElementById(id).addEventListener('input', updateBuildingsTransform);
       });
 
       btnFullscreen.addEventListener('click', () => {
@@ -693,13 +567,9 @@
       let hasCampusMeshes = false;
 
       terrainMeshRef = null;
-      terrainBaseUVs = null;
-      buildingsRefs = [];
-      buildingsBasePos = [];
-      buildingsBaseScale = [];
+      const buildingsRefs = [];
 
       let satTexture = null;
-      let satWorldBox = null;
       let terrainNode = null;
       let roadNode = null;
 
@@ -729,7 +599,6 @@
           if (fullLower.includes('google_sat')) {
             const mat = Array.isArray(node.material) ? node.material[0] : node.material;
             if (mat && mat.map) satTexture = mat.map;
-            satWorldBox = new THREE.Box3().setFromObject(node);
             node.visible = false;
             return;
           }
@@ -747,9 +616,6 @@
           } else {
             buildingsRefs.push(node);
           }
-
-          campusBox.expandByObject(node);
-          hasCampusMeshes = true;
         }
       });
 
@@ -771,10 +637,9 @@
         const vTmp = new THREE.Vector3();
         for (let i = 0; i < posAttr.count; i++) {
           vTmp.fromBufferAttribute(posAttr, i).applyMatrix4(terrainNode.matrixWorld);
-          uvs[i * 2] = (vTmp.x - tMin.x) / tSpanX;
-          uvs[i * 2 + 1] = (vTmp.z - tMin.z) / tSpanZ;
+          uvs[i * 2] = (vTmp.x - tMin.x) / tSpanX + 0.035;
+          uvs[i * 2 + 1] = (vTmp.z - tMin.z) / tSpanZ + 0.01;
         }
-        terrainBaseUVs = new Float32Array(uvs);
         terrainNode.geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
         const mats = Array.isArray(terrainNode.material) ? terrainNode.material : [terrainNode.material];
@@ -793,7 +658,7 @@
       if (terrainNode) {
         const tBox = new THREE.Box3().setFromObject(terrainNode);
         const tCenter = tBox.getCenter(new THREE.Vector3());
-        const tGroundY = tBox.min.y + (tBox.max.y - tBox.min.y) * 0.35;
+        const tGroundY = tBox.min.y + (tBox.max.y - tBox.min.y) * 0.08;
 
         if (buildingsRefs.length > 0) {
           const bBox = new THREE.Box3();
@@ -810,23 +675,8 @@
         }
       }
 
-      // Save base transforms for live calibration sliders
-      buildingsRefs.forEach(b => {
-        buildingsBasePos.push(b.position.clone());
-        buildingsBaseScale.push(b.scale.clone());
-      });
-
-      // Recompute final campusBox
-      campusBox.makeEmpty();
-      currentModel.traverse((node) => {
-        if (node.isMesh && node.visible) {
-          campusBox.expandByObject(node);
-          hasCampusMeshes = true;
-        }
-      });
-
-      // Frame & center model at origin (0, 0, 0) using the campus cluster
-      const box = hasCampusMeshes ? campusBox : new THREE.Box3().setFromObject(currentModel);
+      // Frame & center model around Terrain (ignores any distant road tail)
+      const box = terrainNode ? new THREE.Box3().setFromObject(terrainNode) : new THREE.Box3().setFromObject(currentModel);
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
       currentModel.position.sub(center);
