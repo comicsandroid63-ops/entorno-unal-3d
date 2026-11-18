@@ -238,63 +238,102 @@
       .title { font-size: 14px; }
     }
 
-    #sat-panel {
+    /* Blender-style Outliner & Gizmo HUD */
+    #blender-panel {
       position: absolute;
       top: 90px;
       right: 16px;
-      width: 300px;
+      width: 280px;
       max-height: calc(100vh - 180px);
       overflow-y: auto;
-      background: rgba(15, 23, 42, 0.90);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 14px;
-      padding: 14px;
+      background: rgba(24, 24, 27, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 10px;
       z-index: 20;
       display: none;
       font-size: 12px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
     }
-    #sat-panel.open { display: block; }
-    #sat-panel h4 {
+    #blender-panel.open { display: block; }
+    .bl-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #f4f4f5;
+    }
+    .bl-modes {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .bl-mode-btn {
+      flex: 1;
+      padding: 6px 4px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.06);
+      color: #e4e4e7;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .bl-mode-btn.active {
+      background: #ea580c;
+      border-color: #fb923c;
+      color: #fff;
+    }
+    .bl-outliner {
+      max-height: 185px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      background: rgba(9, 9, 11, 0.65);
+      margin-bottom: 8px;
+    }
+    .bl-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #d4d4d8;
+    }
+    .bl-item:hover { background: rgba(255, 255, 255, 0.08); }
+    .bl-item.selected { background: rgba(234, 88, 12, 0.35); color: #fff; }
+    .bl-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .bl-eye {
+      background: none;
+      border: none;
+      cursor: pointer;
       font-size: 13px;
-      margin-bottom: 10px;
-      color: #f8fafc;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 0 2px;
+      opacity: 0.85;
     }
-    .cal-select {
-      width: 100%;
+    .bl-props {
+      font-family: monospace;
+      font-size: 11px;
+      color: #a1a1aa;
+      background: rgba(9, 9, 11, 0.55);
       padding: 6px 8px;
-      border-radius: 8px;
-      background: rgba(30, 41, 59, 0.95);
-      color: #f8fafc;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      font-size: 12px;
-      margin-bottom: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      line-height: 1.5;
     }
-    .sat-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 7px;
-      gap: 8px;
-    }
-    .sat-row label { color: #cbd5e1; min-width: 72px; }
-    .sat-row input[type="range"] { flex: 1; accent-color: #3b82f6; }
-    .sat-val { color: #60a5fa; font-family: monospace; min-width: 52px; text-align: right; }
-    .sat-actions {
+    .bl-actions {
       display: flex;
       gap: 6px;
-      margin-top: 12px;
       flex-wrap: wrap;
     }
-    .sat-actions button {
+    .bl-actions button {
       flex: 1;
       min-width: 110px;
       padding: 7px 8px;
-      border-radius: 8px;
+      border-radius: 6px;
       border: 1px solid rgba(255, 255, 255, 0.15);
       background: rgba(255, 255, 255, 0.08);
       color: #f8fafc;
@@ -302,11 +341,11 @@
       font-size: 11px;
       font-weight: 600;
     }
-    .sat-actions button.primary {
+    .bl-actions button.primary {
       background: #2563eb;
       border-color: #3b82f6;
     }
-    .sat-actions button:hover { background: rgba(59, 130, 246, 0.45); }
+    .bl-actions button:hover { background: rgba(59, 130, 246, 0.45); }
   </style>
 
   <!-- Import maps polyfill for Three.js ES Modules -->
@@ -341,46 +380,27 @@
     <button class="tool-btn" id="btn-rotate" title="Girar automáticamente">🌀 Auto-rotar</button>
     <button class="tool-btn" id="btn-wireframe" title="Modo malla">📐 Malla</button>
     <button class="tool-btn" id="btn-light" title="Alternar iluminación">☀️ Luz Día</button>
-    <button class="tool-btn" id="btn-sat-cal" title="Calibrar objetos y satélite">🎛️ Calibrar</button>
+    <button class="tool-btn" id="btn-sat-cal" title="Modo edición estilo Blender (G/R/S)">🎛️ Editar (Blender)</button>
     <button class="tool-btn" id="btn-fullscreen" title="Pantalla completa">⛶ Pantalla completa</button>
   </div>
 
-  <!-- Calibration Panel (Satellite + Any Object) -->
-  <div id="sat-panel">
-    <h4>
-      <span>🎛️ Calibrar Capas y Objetos</span>
+  <!-- Blender Outliner & Transform Gizmo Panel -->
+  <div id="blender-panel">
+    <div class="bl-header">
+      <span>🔶 Edición Blender (Clic en 3D)</span>
       <button id="btn-close-sat" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;">✕</button>
-    </h4>
-    <select id="cal-target" class="cal-select">
-      <option value="__SAT__">🗺️ Imagen Satelital (en Terreno)</option>
-    </select>
-
-    <div id="sat-controls">
-      <div class="sat-row"><label>Mover X</label><input type="range" id="sat-u" min="0.05" max="0.70" step="0.002" value="0.318"><span class="sat-val" id="val-sat-u">0.318</span></div>
-      <div class="sat-row"><label>Mover Z</label><input type="range" id="sat-v" min="0.35" max="0.98" step="0.002" value="0.722"><span class="sat-val" id="val-sat-v">0.722</span></div>
-      <div class="sat-row"><label>Ancho (X)</label><input type="range" id="sat-sx" min="800" max="3800" step="10" value="2050"><span class="sat-val" id="val-sat-sx">2050</span></div>
-      <div class="sat-row"><label>Alto (Z)</label><input type="range" id="sat-sz" min="600" max="3200" step="10" value="1520"><span class="sat-val" id="val-sat-sz">1520</span></div>
-      <div class="sat-row"><label>Rotación °</label><input type="range" id="sat-rot" min="-25" max="25" step="0.2" value="0"><span class="sat-val" id="val-sat-rot">0.0°</span></div>
     </div>
-
-    <div id="obj-controls" style="display:none;">
-      <div class="sat-row">
-        <label>Visible</label>
-        <input type="checkbox" id="obj-vis" checked style="width:16px;height:16px;accent-color:#3b82f6;">
-      </div>
-      <div class="sat-row"><label>Mover X</label><input type="range" id="obj-dx" min="-600" max="600" step="1" value="0"><span class="sat-val" id="val-obj-dx">0</span></div>
-      <div class="sat-row"><label>Altura Y</label><input type="range" id="obj-dy" min="-300" max="300" step="1" value="0"><span class="sat-val" id="val-obj-dy">0</span></div>
-      <div class="sat-row"><label>Mover Z</label><input type="range" id="obj-dz" min="-600" max="600" step="1" value="0"><span class="sat-val" id="val-obj-dz">0</span></div>
-      <div class="sat-row"><label>Escala X</label><input type="range" id="obj-sx" min="0.2" max="3" step="0.01" value="1"><span class="sat-val" id="val-obj-sx">1.00</span></div>
-      <div class="sat-row"><label>Escala Y</label><input type="range" id="obj-sy" min="0.2" max="3" step="0.01" value="1"><span class="sat-val" id="val-obj-sy">1.00</span></div>
-      <div class="sat-row"><label>Escala Z</label><input type="range" id="obj-sz" min="0.2" max="3" step="0.01" value="1"><span class="sat-val" id="val-obj-sz">1.00</span></div>
-      <div class="sat-row"><label>Rotar Y °</label><input type="range" id="obj-ry" min="-180" max="180" step="0.5" value="0"><span class="sat-val" id="val-obj-ry">0.0°</span></div>
+    <div class="bl-modes">
+      <button class="bl-mode-btn active" id="mode-g" title="Tecla G">↔ Mover (G)</button>
+      <button class="bl-mode-btn" id="mode-r" title="Tecla R">↻ Rotar (R)</button>
+      <button class="bl-mode-btn" id="mode-s" title="Tecla S">⤢ Escalar (S)</button>
     </div>
-
-    <div class="sat-actions">
+    <div class="bl-outliner" id="bl-outliner"></div>
+    <div class="bl-props" id="bl-props">Haz clic en un objeto o en la lista para moverlo con las flechas 3D.</div>
+    <div class="bl-actions">
       <button id="btn-sat-reset">↺ Reiniciar</button>
       <button id="btn-sat-copy">📋 Copiar JSON</button>
-      <button id="btn-sat-download" class="primary">💾 Descargar calibración (.json)</button>
+      <button id="btn-sat-download" class="primary">💾 Descargar (.json)</button>
     </div>
   </div>
 
@@ -413,11 +433,12 @@
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { TransformControls } from 'three/addons/controls/TransformControls.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
     // Application State
-    let scene, camera, renderer, controls;
+    let scene, camera, renderer, controls, transformControls;
     let currentModel = null;
     let autoRotate = false;
     let isWireframe = false;
@@ -443,13 +464,17 @@
     const btnLight = document.getElementById('btn-light');
     const btnSatCal = document.getElementById('btn-sat-cal');
     const btnCloseSat = document.getElementById('btn-close-sat');
-    const satPanel = document.getElementById('sat-panel');
+    const blenderPanel = document.getElementById('blender-panel');
+    const outlinerEl = document.getElementById('bl-outliner');
+    const propsEl = document.getElementById('bl-props');
     const btnFullscreen = document.getElementById('btn-fullscreen');
 
-    // Layer references
+    // Layer references & Blender gizmo state
     let terrainMeshRef = null;
     let terrainWorldPositions = null;
-    const editableObjects = {}; // key -> { node, label, basePos, baseScale, baseRot, baseVis, state }
+    let satProxy = null;
+    let selectedKey = null;
+    const editableObjects = {}; // key -> { node, label, basePos, baseScale, baseRot, baseVis }
 
     // Lights
     let hemiLight, dirLight, ambientLight;
@@ -473,12 +498,25 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
-      // 4. Controls
+      // 4. Controls + Blender TransformControls Gizmo
       controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.screenSpacePanning = true;
       controls.maxPolarAngle = Math.PI / 2 + 0.05; // Prevent camera going deeply underground
+
+      transformControls = new TransformControls(camera, renderer.domElement);
+      transformControls.setSize(0.9);
+      transformControls.addEventListener('dragging-changed', (event) => {
+        controls.enabled = !event.value;
+      });
+      transformControls.addEventListener('objectChange', () => {
+        if (selectedKey === '__SAT__') {
+          updateSatFromProxy();
+        }
+        updatePropsReadout();
+      });
+      scene.add(transformControls);
 
       // 6. Lighting Setup
       setupLights();
@@ -615,116 +653,148 @@
         uvAttr.needsUpdate = true;
       };
 
-      const calTargetSel = document.getElementById('cal-target');
-      const satControlsEl = document.getElementById('sat-controls');
-      const objControlsEl = document.getElementById('obj-controls');
+      const updateSatFromProxy = () => {
+        if (!terrainMeshRef || !terrainWorldPositions || !satProxy) return;
+        const sx = Math.max(200, satProxy.scale.x);
+        const sz = Math.max(200, satProxy.scale.z);
+        const rad = -satProxy.rotation.y;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        // Compute current offset relative to satProxy's centered world coordinates
+        const uvAttr = terrainMeshRef.geometry.attributes.uv;
+        for (let i = 0; i < uvAttr.count; i++) {
+          const dx = terrainWorldPositions[i * 2] - satProxy.position.x;
+          const dz = terrainWorldPositions[i * 2 + 1] - satProxy.position.z;
+          const rx = dx * cos - dz * sin;
+          const rz = dx * sin + dz * cos;
+          uvAttr.setXY(i, 0.5 + rx / sx, 0.5 + rz / sz);
+        }
+        uvAttr.needsUpdate = true;
+      };
 
-      const syncObjSliders = () => {
-        const key = calTargetSel.value;
-        if (key === '__SAT__') {
-          satControlsEl.style.display = 'block';
-          objControlsEl.style.display = 'none';
+      const updatePropsReadout = () => {
+        if (!selectedKey || !editableObjects[selectedKey]) {
+          propsEl.innerText = 'Haz clic en un objeto 3D o en la lista para moverlo con G (Mover), R (Rotar), S (Escalar).';
           return;
         }
-        satControlsEl.style.display = 'none';
-        objControlsEl.style.display = 'block';
-        const entry = editableObjects[key];
-        if (!entry) return;
-        const s = entry.state;
-        document.getElementById('obj-vis').checked = s.vis;
-        document.getElementById('obj-dx').value = s.dx;
-        document.getElementById('obj-dy').value = s.dy;
-        document.getElementById('obj-dz').value = s.dz;
-        document.getElementById('obj-sx').value = s.sx;
-        document.getElementById('obj-sy').value = s.sy;
-        document.getElementById('obj-sz').value = s.sz;
-        document.getElementById('obj-ry').value = s.ry;
-        document.getElementById('val-obj-dx').innerText = s.dx;
-        document.getElementById('val-obj-dy').innerText = s.dy;
-        document.getElementById('val-obj-dz').innerText = s.dz;
-        document.getElementById('val-obj-sx').innerText = s.sx.toFixed(2);
-        document.getElementById('val-obj-sy').innerText = s.sy.toFixed(2);
-        document.getElementById('val-obj-sz').innerText = s.sz.toFixed(2);
-        document.getElementById('val-obj-ry').innerText = s.ry.toFixed(1) + '°';
+        const n = editableObjects[selectedKey].node;
+        const deg = (n.rotation.y * 180 / Math.PI).toFixed(1);
+        propsEl.innerHTML =
+          `<b>${editableObjects[selectedKey].label}</b><br>` +
+          `Pos: X ${n.position.x.toFixed(1)} | Y ${n.position.y.toFixed(1)} | Z ${n.position.z.toFixed(1)}<br>` +
+          `Esc: X ${n.scale.x.toFixed(2)} | Y ${n.scale.y.toFixed(2)} | Z ${n.scale.z.toFixed(2)}<br>` +
+          `Rot Y: ${deg}°`;
       };
 
-      const applySelectedObjTransform = () => {
-        const key = calTargetSel.value;
-        const entry = editableObjects[key];
-        if (!entry) return;
-        const s = entry.state;
-        s.vis = document.getElementById('obj-vis').checked;
-        s.dx = parseFloat(document.getElementById('obj-dx').value);
-        s.dy = parseFloat(document.getElementById('obj-dy').value);
-        s.dz = parseFloat(document.getElementById('obj-dz').value);
-        s.sx = parseFloat(document.getElementById('obj-sx').value);
-        s.sy = parseFloat(document.getElementById('obj-sy').value);
-        s.sz = parseFloat(document.getElementById('obj-sz').value);
-        s.ry = parseFloat(document.getElementById('obj-ry').value);
-
-        entry.node.visible = s.vis;
-        entry.node.position.set(entry.basePos.x + s.dx, entry.basePos.y + s.dy, entry.basePos.z + s.dz);
-        entry.node.scale.set(entry.baseScale.x * s.sx, entry.baseScale.y * s.sy, entry.baseScale.z * s.sz);
-        entry.node.rotation.y = entry.baseRot.y + (s.ry * Math.PI / 180);
-        syncObjSliders();
+      const selectEditable = (key) => {
+        selectedKey = key;
+        document.querySelectorAll('.bl-item').forEach(el => {
+          el.classList.toggle('selected', el.dataset.key === key);
+        });
+        if (key && editableObjects[key] && blenderPanel.classList.contains('open')) {
+          transformControls.attach(editableObjects[key].node);
+        } else {
+          transformControls.detach();
+        }
+        updatePropsReadout();
       };
 
-      calTargetSel.addEventListener('change', syncObjSliders);
-      ['obj-vis', 'obj-dx', 'obj-dy', 'obj-dz', 'obj-sx', 'obj-sy', 'obj-sz', 'obj-ry'].forEach(id => {
-        document.getElementById(id).addEventListener('input', applySelectedObjTransform);
+      const setGizmoMode = (mode) => {
+        transformControls.setMode(mode);
+        document.getElementById('mode-g').classList.toggle('active', mode === 'translate');
+        document.getElementById('mode-r').classList.toggle('active', mode === 'rotate');
+        document.getElementById('mode-s').classList.toggle('active', mode === 'scale');
+      };
+
+      document.getElementById('mode-g').addEventListener('click', () => setGizmoMode('translate'));
+      document.getElementById('mode-r').addEventListener('click', () => setGizmoMode('rotate'));
+      document.getElementById('mode-s').addEventListener('click', () => setGizmoMode('scale'));
+
+      // Blender Hotkeys (G / R / S / Escape)
+      window.addEventListener('keydown', (e) => {
+        if (!blenderPanel.classList.contains('open')) return;
+        const k = e.key.toLowerCase();
+        if (k === 'g') setGizmoMode('translate');
+        else if (k === 'r') setGizmoMode('rotate');
+        else if (k === 's') setGizmoMode('scale');
+        else if (k === 'escape') selectEditable(null);
+      });
+
+      // Click directly on 3D object to attach Blender gizmo
+      const raycaster = new THREE.Raycaster();
+      const pointerDownPos = new THREE.Vector2();
+      renderer.domElement.addEventListener('pointerdown', (e) => {
+        pointerDownPos.set(e.clientX, e.clientY);
+      });
+      renderer.domElement.addEventListener('pointerup', (e) => {
+        if (!blenderPanel.classList.contains('open')) return;
+        if (transformControls.dragging) return;
+        if (Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > 5) return;
+        const rect = renderer.domElement.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+          ((e.clientX - rect.left) / rect.width) * 2 - 1,
+          -((e.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        raycaster.setFromCamera(mouse, camera);
+        if (currentModel) {
+          const hits = raycaster.intersectObject(currentModel, true).filter(h => h.object.visible);
+          if (hits.length > 0) {
+            const hitObj = hits[0].object;
+            const foundKey = Object.keys(editableObjects).find(k => editableObjects[k].node === hitObj);
+            if (foundKey) selectEditable(foundKey);
+          }
+        }
       });
 
       const buildCalibrationReport = () => {
         const objs = {};
         Object.keys(editableObjects).forEach(k => {
           const e = editableObjects[k];
+          const n = e.node;
           objs[k] = {
             name: e.label,
-            visible: e.node.visible,
-            position: [+e.node.position.x.toFixed(3), +e.node.position.y.toFixed(3), +e.node.position.z.toFixed(3)],
-            scale: [+e.node.scale.x.toFixed(4), +e.node.scale.y.toFixed(4), +e.node.scale.z.toFixed(4)],
-            rotationDegY: +(e.node.rotation.y * 180 / Math.PI).toFixed(2),
-            delta: { ...e.state }
+            visible: n.visible,
+            position: [+n.position.x.toFixed(3), +n.position.y.toFixed(3), +n.position.z.toFixed(3)],
+            scale: [+n.scale.x.toFixed(4), +n.scale.y.toFixed(4), +n.scale.z.toFixed(4)],
+            rotationDegY: +(n.rotation.y * 180 / Math.PI).toFixed(2)
           };
         });
         return {
-          satelliteUV: {
-            u0: parseFloat(document.getElementById('sat-u').value),
-            v0: parseFloat(document.getElementById('sat-v').value),
-            spanX: parseFloat(document.getElementById('sat-sx').value),
-            spanZ: parseFloat(document.getElementById('sat-sz').value),
-            rotDeg: parseFloat(document.getElementById('sat-rot').value)
-          },
+          satelliteProxy: satProxy ? {
+            centerX: +satProxy.position.x.toFixed(3),
+            centerZ: +satProxy.position.z.toFixed(3),
+            spanX: +satProxy.scale.x.toFixed(2),
+            spanZ: +satProxy.scale.z.toFixed(2),
+            rotDeg: +(-satProxy.rotation.y * 180 / Math.PI).toFixed(2)
+          } : null,
           objects: objs
         };
       };
 
       btnSatCal.addEventListener('click', () => {
-        satPanel.classList.toggle('open');
-        btnSatCal.classList.toggle('active', satPanel.classList.contains('open'));
+        const open = blenderPanel.classList.toggle('open');
+        btnSatCal.classList.toggle('active', open);
+        if (open) {
+          selectEditable(selectedKey || '__SAT__');
+        } else {
+          transformControls.detach();
+        }
       });
       btnCloseSat.addEventListener('click', () => {
-        satPanel.classList.remove('open');
+        blenderPanel.classList.remove('open');
         btnSatCal.classList.remove('active');
+        transformControls.detach();
       });
-      ['sat-u', 'sat-v', 'sat-sx', 'sat-sz', 'sat-rot'].forEach(id => {
-        document.getElementById(id).addEventListener('input', applySatelliteUVs);
-      });
+
       document.getElementById('btn-sat-reset').addEventListener('click', () => {
-        if (calTargetSel.value === '__SAT__') {
-          document.getElementById('sat-u').value = 0.318;
-          document.getElementById('sat-v').value = 0.722;
-          document.getElementById('sat-sx').value = 2050;
-          document.getElementById('sat-sz').value = 1520;
-          document.getElementById('sat-rot').value = 0;
-          applySatelliteUVs();
-        } else {
-          const e = editableObjects[calTargetSel.value];
-          if (e) {
-            e.state = { vis: e.baseVis, dx: 0, dy: 0, dz: 0, sx: 1, sy: 1, sz: 1, ry: 0 };
-            syncObjSliders();
-            applySelectedObjTransform();
-          }
+        if (selectedKey && editableObjects[selectedKey]) {
+          const e = editableObjects[selectedKey];
+          e.node.position.copy(e.basePos);
+          e.node.scale.copy(e.baseScale);
+          e.node.rotation.copy(e.baseRot);
+          e.node.visible = e.baseVis;
+          if (selectedKey === '__SAT__') updateSatFromProxy();
+          updatePropsReadout();
         }
       });
       document.getElementById('btn-sat-copy').addEventListener('click', () => {
@@ -970,10 +1040,50 @@
         }
       }
 
-      // Populate editableObjects dropdown so the user can move/scale/rotate/toggle any mesh in the scene
-      const sel = document.getElementById('cal-target');
-      while (sel.options.length > 1) sel.remove(1);
+      // Frame & center model around Terrain BEFORE creating satProxy & terrainWorldPositions
+      const box = terrainNode ? new THREE.Box3().setFromObject(terrainNode) : new THREE.Box3().setFromObject(currentModel);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      currentModel.position.sub(center);
+      currentModel.updateMatrixWorld(true);
+
+      // Recompute terrainWorldPositions in final centered world space so satProxy & UVs align seamlessly
+      if (terrainNode && terrainWorldPositions) {
+        const posAttr = terrainNode.geometry.attributes.position;
+        const vTmp = new THREE.Vector3();
+        for (let i = 0; i < posAttr.count; i++) {
+          vTmp.fromBufferAttribute(posAttr, i).applyMatrix4(terrainNode.matrixWorld);
+          terrainWorldPositions[i * 2] = vTmp.x;
+          terrainWorldPositions[i * 2 + 1] = vTmp.z;
+        }
+      }
+
+      // Populate Blender Outliner + Satellite Proxy Gizmo Target
+      outlinerEl.innerHTML = '';
       Object.keys(editableObjects).forEach(k => delete editableObjects[k]);
+      if (satProxy) scene.remove(satProxy);
+
+      if (terrainNode) {
+        const tBoxCenter = new THREE.Box3().setFromObject(terrainNode).getCenter(new THREE.Vector3());
+        satProxy = new THREE.Object3D();
+        // Position satProxy at the UV center (u=0.5, v=0.5) in centered world space
+        satProxy.position.set(
+          -385.5 - center.x + (0.5 - 0.318) * 2050.0,
+          tBoxCenter.y + 30,
+          381.5 - center.z + (0.5 - 0.722) * 1520.0
+        );
+        satProxy.scale.set(2050.0, 1, 1520.0);
+        scene.add(satProxy);
+        editableObjects['__SAT__'] = {
+          node: satProxy,
+          label: '🗺️ Imagen Satelital (en Terreno)',
+          basePos: satProxy.position.clone(),
+          baseScale: satProxy.scale.clone(),
+          baseRot: satProxy.rotation.clone(),
+          baseVis: true
+        };
+      }
+
       let idxCounter = 0;
       currentModel.traverse((node) => {
         if (node.isMesh) {
@@ -986,25 +1096,40 @@
             : `📦 ${rawName}`;
           editableObjects[key] = {
             node,
-            label: rawName,
+            label: pretty,
             basePos: node.position.clone(),
             baseScale: node.scale.clone(),
             baseRot: node.rotation.clone(),
-            baseVis: node.visible,
-            state: { vis: node.visible, dx: 0, dy: 0, dz: 0, sx: 1, sy: 1, sz: 1, ry: 0 }
+            baseVis: node.visible
           };
-          const opt = document.createElement('option');
-          opt.value = key;
-          opt.textContent = pretty + (node.visible ? '' : ' (oculto)');
-          sel.appendChild(opt);
         }
       });
 
-      // Frame & center model around Terrain (ignores any distant road tail)
-      const box = terrainNode ? new THREE.Box3().setFromObject(terrainNode) : new THREE.Box3().setFromObject(currentModel);
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3());
-      currentModel.position.sub(center);
+      Object.keys(editableObjects).forEach(key => {
+        const entry = editableObjects[key];
+        const row = document.createElement('div');
+        row.className = 'bl-item';
+        row.dataset.key = key;
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'bl-eye-label bl-item-name';
+        nameSpan.textContent = entry.label;
+        row.appendChild(nameSpan);
+
+        if (key !== '__SAT__') {
+          const eye = document.createElement('button');
+          eye.className = 'bl-eye';
+          eye.textContent = entry.node.visible ? '👁️' : '🚫';
+          eye.title = 'Mostrar/Ocultar';
+          eye.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            entry.node.visible = !entry.node.visible;
+            eye.textContent = entry.node.visible ? '👁️' : '🚫';
+          });
+          row.appendChild(eye);
+        }
+        row.addEventListener('click', () => selectEditable(key));
+        outlinerEl.appendChild(row);
+      });
 
       const maxDim = Math.max(size.x, size.y, size.z, 1);
 
