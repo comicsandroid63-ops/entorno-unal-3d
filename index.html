@@ -608,9 +608,9 @@
             node.visible = true;
             terrainNode = node;
           } else if (nName.includes('Roads') || pName.includes('Roads')) {
-            node.visible = true;
+            node.visible = false;
             roadNode = node;
-          } else if (nName.includes('Plane.004') || pName.includes('Plane.004') || nName.includes('Plane.006')) {
+          } else if (fullLower.includes('plane004') || fullLower.includes('plane.004') || fullLower.includes('plane006') || fullLower.includes('plane.006')) {
             node.visible = true;
             buildingsRefs.push(node);
           } else {
