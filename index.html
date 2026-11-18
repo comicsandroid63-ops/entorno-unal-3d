@@ -237,6 +237,58 @@
       .header-card { padding: 8px 14px; }
       .title { font-size: 14px; }
     }
+
+    #sat-panel {
+      position: absolute;
+      top: 90px;
+      right: 16px;
+      width: 280px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 14px;
+      z-index: 20;
+      display: none;
+      font-size: 12px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+    #sat-panel.open { display: block; }
+    #sat-panel h4 {
+      font-size: 13px;
+      margin-bottom: 10px;
+      color: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 7px;
+      gap: 8px;
+    }
+    .sat-row label { color: #cbd5e1; min-width: 72px; }
+    .sat-row input[type="range"] { flex: 1; accent-color: #3b82f6; }
+    .sat-val { color: #60a5fa; font-family: monospace; min-width: 48px; text-align: right; }
+    .sat-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .sat-actions button {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .sat-actions button:hover { background: rgba(59, 130, 246, 0.35); }
   </style>
 
   <!-- Import maps polyfill for Three.js ES Modules -->
@@ -271,7 +323,25 @@
     <button class="tool-btn" id="btn-rotate" title="Girar automáticamente">🌀 Auto-rotar</button>
     <button class="tool-btn" id="btn-wireframe" title="Modo malla">📐 Malla</button>
     <button class="tool-btn" id="btn-light" title="Alternar iluminación">☀️ Luz Día</button>
+    <button class="tool-btn" id="btn-sat-cal" title="Calibrar imagen satelital">🎛️ Satélite</button>
     <button class="tool-btn" id="btn-fullscreen" title="Pantalla completa">⛶ Pantalla completa</button>
+  </div>
+
+  <!-- Satellite Calibration Panel -->
+  <div id="sat-panel">
+    <h4>
+      <span>🗺️ Calibrar Imagen Satelital</span>
+      <button id="btn-close-sat" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;">✕</button>
+    </h4>
+    <div class="sat-row"><label>Mover X</label><input type="range" id="sat-u" min="0.10" max="0.60" step="0.002" value="0.318"><span class="sat-val" id="val-sat-u">0.318</span></div>
+    <div class="sat-row"><label>Mover Z</label><input type="range" id="sat-v" min="0.45" max="0.95" step="0.002" value="0.722"><span class="sat-val" id="val-sat-v">0.722</span></div>
+    <div class="sat-row"><label>Ancho (X)</label><input type="range" id="sat-sx" min="1000" max="3500" step="10" value="2050"><span class="sat-val" id="val-sat-sx">2050</span></div>
+    <div class="sat-row"><label>Alto (Z)</label><input type="range" id="sat-sz" min="800" max="3000" step="10" value="1520"><span class="sat-val" id="val-sat-sz">1520</span></div>
+    <div class="sat-row"><label>Rotación °</label><input type="range" id="sat-rot" min="-20" max="20" step="0.2" value="0"><span class="sat-val" id="val-sat-rot">0.0°</span></div>
+    <div class="sat-actions">
+      <button id="btn-sat-reset">↺ Reiniciar</button>
+      <button id="btn-sat-copy">📋 Copiar valores</button>
+    </div>
   </div>
 
   <!-- Mouse / Touch Help -->
@@ -331,10 +401,14 @@
     const btnRotate = document.getElementById('btn-rotate');
     const btnWireframe = document.getElementById('btn-wireframe');
     const btnLight = document.getElementById('btn-light');
+    const btnSatCal = document.getElementById('btn-sat-cal');
+    const btnCloseSat = document.getElementById('btn-close-sat');
+    const satPanel = document.getElementById('sat-panel');
     const btnFullscreen = document.getElementById('btn-fullscreen');
 
     // Layer references
     let terrainMeshRef = null;
+    let terrainWorldPositions = null;
 
     // Lights
     let hemiLight, dirLight, ambientLight;
@@ -471,6 +545,60 @@
           hemiLight.intensity = 0.3;
           btnLight.innerText = '🌙 Noche';
         }
+      });
+
+      const applySatelliteUVs = () => {
+        if (!terrainMeshRef || !terrainWorldPositions) return;
+        const u0 = parseFloat(document.getElementById('sat-u').value);
+        const v0 = parseFloat(document.getElementById('sat-v').value);
+        const sx = parseFloat(document.getElementById('sat-sx').value);
+        const sz = parseFloat(document.getElementById('sat-sz').value);
+        const deg = parseFloat(document.getElementById('sat-rot').value);
+        document.getElementById('val-sat-u').innerText = u0.toFixed(3);
+        document.getElementById('val-sat-v').innerText = v0.toFixed(3);
+        document.getElementById('val-sat-sx').innerText = sx;
+        document.getElementById('val-sat-sz').innerText = sz;
+        document.getElementById('val-sat-rot').innerText = deg.toFixed(1) + '°';
+
+        const rad = deg * Math.PI / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const uvAttr = terrainMeshRef.geometry.attributes.uv;
+        for (let i = 0; i < uvAttr.count; i++) {
+          const dx = terrainWorldPositions[i * 2] + 385.5;
+          const dz = terrainWorldPositions[i * 2 + 1] - 381.5;
+          const rx = dx * cos - dz * sin;
+          const rz = dx * sin + dz * cos;
+          uvAttr.setXY(i, u0 + rx / sx, v0 + rz / sz);
+        }
+        uvAttr.needsUpdate = true;
+      };
+
+      btnSatCal.addEventListener('click', () => {
+        satPanel.classList.toggle('open');
+        btnSatCal.classList.toggle('active', satPanel.classList.contains('open'));
+      });
+      btnCloseSat.addEventListener('click', () => {
+        satPanel.classList.remove('open');
+        btnSatCal.classList.remove('active');
+      });
+      ['sat-u', 'sat-v', 'sat-sx', 'sat-sz', 'sat-rot'].forEach(id => {
+        document.getElementById(id).addEventListener('input', applySatelliteUVs);
+      });
+      document.getElementById('btn-sat-reset').addEventListener('click', () => {
+        document.getElementById('sat-u').value = 0.318;
+        document.getElementById('sat-v').value = 0.722;
+        document.getElementById('sat-sx').value = 2050;
+        document.getElementById('sat-sz').value = 1520;
+        document.getElementById('sat-rot').value = 0;
+        applySatelliteUVs();
+      });
+      document.getElementById('btn-sat-copy').addEventListener('click', () => {
+        const txt = `u=${document.getElementById('sat-u').value}, v=${document.getElementById('sat-v').value}, ancho=${document.getElementById('sat-sx').value}, alto=${document.getElementById('sat-sz').value}, rot=${document.getElementById('sat-rot').value}°`;
+        navigator.clipboard?.writeText(txt);
+        const b = document.getElementById('btn-sat-copy');
+        b.innerText = '✅ Copiado';
+        setTimeout(() => { b.innerText = '📋 Copiar valores'; }, 1500);
       });
 
       btnFullscreen.addEventListener('click', () => {
@@ -629,10 +757,13 @@
         satTexture.flipY = false;
 
         const posAttr = terrainNode.geometry.attributes.position;
+        terrainWorldPositions = new Float32Array(posAttr.count * 2);
         const uvs = new Float32Array(posAttr.count * 2);
         const vTmp = new THREE.Vector3();
         for (let i = 0; i < posAttr.count; i++) {
           vTmp.fromBufferAttribute(posAttr, i).applyMatrix4(terrainNode.matrixWorld);
+          terrainWorldPositions[i * 2] = vTmp.x;
+          terrainWorldPositions[i * 2 + 1] = vTmp.z;
           uvs[i * 2] = 0.318 + (vTmp.x + 385.5) / 2050.0;
           uvs[i * 2 + 1] = 0.722 + (vTmp.z - 381.5) / 1520.0;
         }
