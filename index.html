@@ -569,7 +569,7 @@
       const hiddenNames = new Set([
         'Estructura_Muros', 'Perfil_Carretera', 'Plane',
         'Profesores.002', 'Profesores.005', 'Profesores.006', 'Profesores.007', 'Profesores.008',
-        'Roads.001', 'Roads_Perfecta_Texturizable.002', 'terrain', 'Terrain'
+        'Roads.001', 'Roads_Perfecta_Texturizable.002'
       ]);
 
       currentModel.traverse((node) => {
@@ -600,7 +600,19 @@
         }
       });
 
-      // Align roads/planes to the ground level (min.y) of the buildings
+      // Align buildings & roads to the terrain elevation (without rotating/flipping)
+      const terrainBox = new THREE.Box3();
+      let hasTerrain = false;
+      currentModel.traverse((node) => {
+        if (node.isMesh && node.visible) {
+          const n = (node.name || '').toLowerCase();
+          if (n.includes('terrain')) {
+            terrainBox.expandByObject(node);
+            hasTerrain = true;
+          }
+        }
+      });
+
       const buildingBox = new THREE.Box3();
       let hasBuildings = false;
       currentModel.traverse((node) => {
@@ -614,20 +626,25 @@
       });
 
       if (hasBuildings) {
-        const groundY = buildingBox.min.y;
+        const targetY = hasTerrain ? terrainBox.min.y : buildingBox.min.y;
+        const bDiffY = targetY - buildingBox.min.y;
         currentModel.traverse((node) => {
           if (node.isMesh && node.visible) {
             const n = (node.name || '').toLowerCase();
-            if (n.includes('road') || n.includes('plane') || n.includes('sat')) {
+            if (n.includes('cube') || n.includes('estructura') || n.includes('roofunit')) {
+              if (Math.abs(bDiffY) > 1) {
+                node.position.y += bDiffY;
+              }
+            } else if (n.includes('road') || n.includes('plane') || n.includes('sat')) {
               const rBox = new THREE.Box3().setFromObject(node);
-              const diffY = groundY - rBox.min.y;
+              const diffY = targetY - rBox.min.y;
               if (Math.abs(diffY) > 1) {
                 node.position.y += diffY;
               }
             }
           }
         });
-        // Recompute campusBox after aligning roads
+        // Recompute campusBox after aligning
         campusBox.makeEmpty();
         currentModel.traverse((node) => {
           if (node.isMesh && node.visible) {
