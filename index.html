@@ -600,6 +600,42 @@
         }
       });
 
+      // Align roads/planes to the ground level (min.y) of the buildings
+      const buildingBox = new THREE.Box3();
+      let hasBuildings = false;
+      currentModel.traverse((node) => {
+        if (node.isMesh && node.visible) {
+          const n = (node.name || '').toLowerCase();
+          if (n.includes('cube') || n.includes('estructura') || n.includes('roofunit')) {
+            buildingBox.expandByObject(node);
+            hasBuildings = true;
+          }
+        }
+      });
+
+      if (hasBuildings) {
+        const groundY = buildingBox.min.y;
+        currentModel.traverse((node) => {
+          if (node.isMesh && node.visible) {
+            const n = (node.name || '').toLowerCase();
+            if (n.includes('road') || n.includes('plane') || n.includes('sat')) {
+              const rBox = new THREE.Box3().setFromObject(node);
+              const diffY = groundY - rBox.min.y;
+              if (Math.abs(diffY) > 1) {
+                node.position.y += diffY;
+              }
+            }
+          }
+        });
+        // Recompute campusBox after aligning roads
+        campusBox.makeEmpty();
+        currentModel.traverse((node) => {
+          if (node.isMesh && node.visible) {
+            campusBox.expandByObject(node);
+          }
+        });
+      }
+
       // Frame & center model at origin (0, 0, 0) using the campus cluster
       const box = hasCampusMeshes ? campusBox : new THREE.Box3().setFromObject(currentModel);
       const center = box.getCenter(new THREE.Vector3());
