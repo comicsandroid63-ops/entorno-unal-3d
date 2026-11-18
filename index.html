@@ -588,9 +588,15 @@
             }
           }
 
-          // Hide only giant outer terrain/satellite planes if any, keep all buildings visible
-          campusBox.expandByObject(node);
-          hasCampusMeshes = true;
+          // Hide exact objects that were hidden in Blender
+          const nName = node.name || '';
+          const pName = (node.parent && node.parent.name) ? node.parent.name : '';
+          if (hiddenNames.has(nName) || hiddenNames.has(pName)) {
+            node.visible = false;
+          } else {
+            campusBox.expandByObject(node);
+            hasCampusMeshes = true;
+          }
         }
       });
 
