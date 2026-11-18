@@ -633,8 +633,8 @@
         const vTmp = new THREE.Vector3();
         for (let i = 0; i < posAttr.count; i++) {
           vTmp.fromBufferAttribute(posAttr, i).applyMatrix4(terrainNode.matrixWorld);
-          uvs[i * 2] = 0.330 + (vTmp.x + 385.5) / 2150.0;
-          uvs[i * 2 + 1] = 0.700 + (vTmp.z - 381.5) / 1620.0;
+          uvs[i * 2] = 0.318 + (vTmp.x + 385.5) / 2050.0;
+          uvs[i * 2 + 1] = 0.722 + (vTmp.z - 381.5) / 1520.0;
         }
         terrainNode.geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
@@ -650,12 +650,42 @@
         });
       }
 
-      // Lock Roads.001 + Terrain together at their shared elevation, and keep buildings in their true XZ coordinates (align Y only)
+      // Lock Roads.001 + Terrain together at their shared elevation, and align buildings cleanly onto Terrain + Roads
       if (terrainNode) {
         const tBox = new THREE.Box3().setFromObject(terrainNode);
-        const tGroundY = tBox.min.y + (tBox.max.y - tBox.min.y) * 0.08;
+        const tGroundY = tBox.min.y + (tBox.max.y - tBox.min.y) * 0.35;
 
         if (buildingsRefs.length > 0) {
+          // Strip giant flat background plane triangles (edge > 250) merged into Plane.004 so no olive-gray plane clips Terrain
+          buildingsRefs.forEach(b => {
+            const geom = b.geometry;
+            if (geom && geom.index && geom.attributes.position) {
+              const pos = geom.attributes.position;
+              const idx = geom.index;
+              const kept = [];
+              const a = new THREE.Vector3(), bb = new THREE.Vector3(), c = new THREE.Vector3();
+              for (let i = 0; i < idx.count; i += 3) {
+                const i0 = idx.getX(i), i1 = idx.getX(i + 1), i2 = idx.getX(i + 2);
+                a.fromBufferAttribute(pos, i0);
+                bb.fromBufferAttribute(pos, i1);
+                c.fromBufferAttribute(pos, i2);
+                if (a.distanceTo(bb) < 250 && bb.distanceTo(c) < 250 && c.distanceTo(a) < 250) {
+                  kept.push(i0, i1, i2);
+                }
+              }
+              if (kept.length > 0 && kept.length < idx.count) {
+                geom.setIndex(kept);
+                geom.computeBoundingBox();
+                geom.computeBoundingSphere();
+              }
+            }
+            if (b.scale.x > 1.5) {
+              b.scale.set(1.0, 1.2, 1.0);
+              b.position.x -= 40;
+              b.position.z -= 55;
+            }
+          });
+          currentModel.updateMatrixWorld(true);
           const bBox = new THREE.Box3();
           buildingsRefs.forEach(b => bBox.expandByObject(b));
           const dy = tGroundY - bBox.min.y;
