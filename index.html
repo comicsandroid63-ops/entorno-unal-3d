@@ -600,6 +600,29 @@
         }
       });
 
+      // Apply satellite texture (from EXPORT_GOOGLE_SAT_WM) onto terrain if terrain has no map
+      let satTexture = null;
+      currentModel.traverse((node) => {
+        if (node.isMesh && (node.name || '').toLowerCase().includes('sat')) {
+          const mat = Array.isArray(node.material) ? node.material[0] : node.material;
+          if (mat && mat.map) satTexture = mat.map;
+        }
+      });
+      if (satTexture) {
+        currentModel.traverse((node) => {
+          if (node.isMesh && (node.name || '').toLowerCase().includes('terrain')) {
+            const mats = Array.isArray(node.material) ? node.material : [node.material];
+            mats.forEach(m => {
+              if (m && !m.map) {
+                m.map = satTexture;
+                m.color.setHex(0xffffff);
+                m.needsUpdate = true;
+              }
+            });
+          }
+        });
+      }
+
       // Align buildings & roads to the terrain elevation (without rotating/flipping)
       const terrainBox = new THREE.Box3();
       let hasTerrain = false;
