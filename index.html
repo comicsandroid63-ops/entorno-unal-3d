@@ -570,6 +570,7 @@
       const buildingsRefs = [];
 
       let satTexture = null;
+      let satWorldBox = null;
       let terrainNode = null;
       let roadNode = null;
 
@@ -599,6 +600,7 @@
           if (fullLower.includes('google_sat')) {
             const mat = Array.isArray(node.material) ? node.material[0] : node.material;
             if (mat && mat.map) satTexture = mat.map;
+            satWorldBox = new THREE.Box3().setFromObject(node);
             node.visible = false;
             return;
           }
@@ -619,26 +621,20 @@
         }
       });
 
-      // Drape Google Satellite texture onto the 3D elevated Terrain mesh
+      // Drape Google Satellite texture onto the 3D elevated Terrain mesh using satWorldBox true bounds
       if (terrainNode && satTexture) {
         terrainMeshRef = terrainNode;
         satTexture.wrapS = THREE.ClampToEdgeWrapping;
         satTexture.wrapT = THREE.ClampToEdgeWrapping;
         satTexture.flipY = false;
 
-        const tBox = new THREE.Box3().setFromObject(terrainNode);
-        const tMin = tBox.min;
-        const tMax = tBox.max;
-        const tSpanX = Math.max(tMax.x - tMin.x, 1);
-        const tSpanZ = Math.max(tMax.z - tMin.z, 1);
-
         const posAttr = terrainNode.geometry.attributes.position;
         const uvs = new Float32Array(posAttr.count * 2);
         const vTmp = new THREE.Vector3();
         for (let i = 0; i < posAttr.count; i++) {
           vTmp.fromBufferAttribute(posAttr, i).applyMatrix4(terrainNode.matrixWorld);
-          uvs[i * 2] = (vTmp.x - tMin.x) / tSpanX + 0.035;
-          uvs[i * 2 + 1] = (vTmp.z - tMin.z) / tSpanZ + 0.01;
+          uvs[i * 2] = 0.330 + (vTmp.x + 385.5) / 2150.0;
+          uvs[i * 2 + 1] = 0.700 + (vTmp.z - 381.5) / 1620.0;
         }
         terrainNode.geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
@@ -654,22 +650,16 @@
         });
       }
 
-      // Lock Roads.001 + Terrain together at their shared elevation, and align buildings cleanly to Terrain without flipping
+      // Lock Roads.001 + Terrain together at their shared elevation, and keep buildings in their true XZ coordinates (align Y only)
       if (terrainNode) {
         const tBox = new THREE.Box3().setFromObject(terrainNode);
-        const tCenter = tBox.getCenter(new THREE.Vector3());
         const tGroundY = tBox.min.y + (tBox.max.y - tBox.min.y) * 0.08;
 
         if (buildingsRefs.length > 0) {
           const bBox = new THREE.Box3();
           buildingsRefs.forEach(b => bBox.expandByObject(b));
-          const bCenter = bBox.getCenter(new THREE.Vector3());
-          const dx = tCenter.x - bCenter.x;
-          const dz = tCenter.z - bCenter.z;
           const dy = tGroundY - bBox.min.y;
           buildingsRefs.forEach(b => {
-            b.position.x += dx;
-            b.position.z += dz;
             b.position.y += dy;
           });
         }
