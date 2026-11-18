@@ -372,10 +372,6 @@
       <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 7v10l10 5 10-5V7"/><line x1="12" y1="12" x2="12" y2="22"/></svg>
       <span>Malla</span>
     </button>
-    <button class="tool-btn" id="btn-light" title="Alternar iluminación">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-      <span id="light-label">Día</span>
-    </button>
     <span class="dock-sep"></span>
     <button class="tool-btn" id="btn-fullscreen" title="Pantalla completa">
       <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
@@ -415,7 +411,6 @@
     let currentModel = null;
     let autoRotate = false;
     let isWireframe = false;
-    let lightMode = 0; // 0: Day, 1: Sunset, 2: Dark
     let initialCameraState = { pos: null, target: null };
 
     const MODEL_PATH = 'Unal.glb?v=2'; // Cache-busted relative path for GitHub Pages
@@ -434,7 +429,6 @@
     const btnTop = document.getElementById('btn-top');
     const btnRotate = document.getElementById('btn-rotate');
     const btnWireframe = document.getElementById('btn-wireframe');
-    const btnLight = document.getElementById('btn-light');
     const btnFullscreen = document.getElementById('btn-fullscreen');
 
     // Layer references
@@ -551,30 +545,6 @@
               }
             }
           });
-        }
-      });
-
-      btnLight.addEventListener('click', () => {
-        lightMode = (lightMode + 1) % 3;
-        const lbl = document.getElementById('light-label');
-        if (lightMode === 0) { // Day
-          scene.background.setHex(0x090d16);
-          dirLight.color.setHex(0xfffaed);
-          dirLight.intensity = 1.4;
-          hemiLight.intensity = 0.7;
-          lbl.innerText = 'Día';
-        } else if (lightMode === 1) { // Sunset
-          scene.background.setHex(0x1f141e);
-          dirLight.color.setHex(0xff9a5c);
-          dirLight.intensity = 1.6;
-          hemiLight.intensity = 0.5;
-          lbl.innerText = 'Tarde';
-        } else { // Dark / Night
-          scene.background.setHex(0x020617);
-          dirLight.color.setHex(0x7dd3fc);
-          dirLight.intensity = 0.4;
-          hemiLight.intensity = 0.3;
-          lbl.innerText = 'Noche';
         }
       });
 
@@ -805,11 +775,9 @@
       camera.far = maxDim * 20;
       camera.updateProjectionMatrix();
 
-      const fov = camera.fov * (Math.PI / 180);
-      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.15;
-      cameraZ = Math.max(cameraZ, 10);
-
-      camera.position.set(cameraZ * 0.65, cameraZ * 0.45, cameraZ * 0.65);
+      // Default view: Aerial (top-down over campus)
+      const aerialDist = Math.max(size.x, size.z, 100) * 0.95;
+      camera.position.set(0, aerialDist, 0.1);
       camera.lookAt(0, 0, 0);
       controls.target.set(0, 0, 0);
       controls.maxDistance = maxDim * 8;
