@@ -15,24 +15,24 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #0f172a;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #090d16;
       color: #f8fafc;
+      -webkit-font-smoothing: antialiased;
     }
     #canvas-container {
       width: 100%;
       height: 100%;
       position: absolute;
-      top: 0;
-      left: 0;
+      inset: 0;
     }
 
-    /* Top Bar */
+    /* Minimalist Top Bar */
     header {
       position: absolute;
-      top: 16px;
-      left: 16px;
-      right: 16px;
+      top: 20px;
+      left: 20px;
+      right: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -41,150 +41,228 @@
     }
     .header-card {
       pointer-events: auto;
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 10px 18px;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      background: rgba(9, 13, 22, 0.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 8px 14px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+      flex-shrink: 0;
     }
     .title {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .badge {
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 600;
-      background: #2563eb;
-      color: white;
-      padding: 2px 7px;
-      border-radius: 999px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: -0.01em;
+      color: #f1f5f9;
+    }
+    .divider-v {
+      width: 1px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.12);
     }
     .subtitle {
-      font-size: 12px;
-      color: #94a3b8;
-      margin-top: 2px;
-    }
-
-    /* Floating Toolbar */
-    .toolbar {
-      position: absolute;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 8px;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(14px);
-      padding: 8px 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-      z-index: 10;
-    }
-    .tool-btn {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #e2e8f0;
-      padding: 8px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-    }
-    .tool-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.3);
-      color: #ffffff;
-      transform: translateY(-2px);
-    }
-    .tool-btn.active {
-      background: #2563eb;
-      border-color: #3b82f6;
-      color: white;
-    }
-
-    /* Instructions & Info box */
-    .help-card {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 10px 14px;
-      border-radius: 10px;
       font-size: 11px;
       color: #94a3b8;
-      line-height: 1.5;
-      z-index: 9;
+      font-weight: 400;
+    }
+
+    /* Minimalist Help Toggle (top-right) */
+    .help-wrap {
+      pointer-events: auto;
+      position: relative;
+    }
+    .help-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(9, 13, 22, 0.55);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .help-btn:hover {
+      color: #f8fafc;
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+    .help-card {
+      position: absolute;
+      top: 42px;
+      right: 0;
+      width: 215px;
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.7;
+      opacity: 0;
+      transform: translateY(-4px);
       pointer-events: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+    .help-wrap:hover .help-card,
+    .help-wrap:focus-within .help-card {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
     .help-card b {
       color: #e2e8f0;
+      font-weight: 500;
     }
 
-    /* Loading Screen */
+    /* Minimalist Floating Dock */
+    .toolbar {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(9, 13, 22, 0.62);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 5px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+      z-index: 10;
+    }
+    .tool-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #cbd5e1;
+      padding: 7px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .tool-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+    .tool-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+    }
+    .tool-btn.active {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+    }
+    .dock-sep {
+      width: 1px;
+      height: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 0 2px;
+    }
+
+    /* Minimalist Start / Loading Screen */
     #loader {
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      background: radial-gradient(circle at 50% 45%, #111827 0%, #070a11 100%);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       z-index: 100;
-      transition: opacity 0.5s ease;
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
     #loader.hidden {
       opacity: 0;
       pointer-events: none;
     }
-    .spinner {
-      width: 48px;
-      height: 48px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top-color: #3b82f6;
-      animation: spin 1s ease-in-out infinite;
+    .loader-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-bottom: 20px;
+      position: relative;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .loader-mark::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: 15px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      animation: pulseRing 2.2s ease-out infinite;
+    }
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      100% { transform: scale(1.25); opacity: 0; }
+    }
+    .loader-title {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }
+    .loading-status {
+      font-size: 12px;
+      font-weight: 400;
+      color: #64748b;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
     }
     .progress-bar-container {
-      width: 260px;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.1);
+      width: 220px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.08);
       border-radius: 999px;
       overflow: hidden;
-      margin-top: 12px;
+      margin-top: 22px;
     }
     .progress-bar {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #3b82f6, #60a5fa);
-      transition: width 0.2s ease;
-    }
-    .loading-status {
-      font-size: 14px;
-      font-weight: 500;
-      color: #e2e8f0;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      transition: width 0.25s ease;
     }
     .loading-details {
-      font-size: 12px;
-      color: #64748b;
-      margin-top: 6px;
+      font-size: 11px;
+      color: #475569;
+      margin-top: 10px;
+      font-variant-numeric: tabular-nums;
     }
 
     /* Drag & Drop Overlay Alert */
@@ -232,10 +310,11 @@
     }
 
     @media (max-width: 640px) {
-      .help-card { display: none; }
-      .toolbar { width: 92%; justify-content: center; flex-wrap: wrap; }
-      .header-card { padding: 8px 14px; }
-      .title { font-size: 14px; }
+      .help-wrap { display: none; }
+      .toolbar { max-width: 94%; overflow-x: auto; }
+      .tool-btn span { display: none; }
+      .tool-btn { padding: 9px 11px; }
+      .header-card { padding: 7px 12px; }
     }
   </style>
 
@@ -256,39 +335,64 @@
   <!-- Header -->
   <header>
     <div class="header-card">
-      <div class="title">
-        <span>Campus UNAL</span>
-        <span class="badge">3D WebGL</span>
+      <span class="status-dot"></span>
+      <span class="title">Campus UNAL</span>
+      <span class="divider-v"></span>
+      <span class="subtitle" id="stats-info">Cargando 3D...</span>
+    </div>
+
+    <div class="help-wrap">
+      <button class="help-btn" aria-label="Controles" title="Controles">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <div class="help-card">
+        <div><b>Girar:</b> Clic izq. + arrastrar</div>
+        <div><b>Mover:</b> Clic der. + arrastrar</div>
+        <div><b>Zoom:</b> Rueda / Pellizcar</div>
       </div>
-      <div class="subtitle" id="stats-info">Cargando entorno 3D...</div>
     </div>
   </header>
 
-  <!-- Floating Toolbar -->
+  <!-- Minimalist Floating Dock -->
   <div class="toolbar">
-    <button class="tool-btn" id="btn-reset" title="Reiniciar vista">🔄 Vista inicial</button>
-    <button class="tool-btn" id="btn-top" title="Vista aérea / Cenital">🧭 Vista Aérea</button>
-    <button class="tool-btn" id="btn-rotate" title="Girar automáticamente">🌀 Auto-rotar</button>
-    <button class="tool-btn" id="btn-wireframe" title="Modo malla">📐 Malla</button>
-    <button class="tool-btn" id="btn-light" title="Alternar iluminación">☀️ Luz Día</button>
-    <button class="tool-btn" id="btn-fullscreen" title="Pantalla completa">⛶ Pantalla completa</button>
+    <button class="tool-btn" id="btn-reset" title="Vista inicial">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+      <span>Inicio</span>
+    </button>
+    <button class="tool-btn" id="btn-top" title="Vista aérea">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+      <span>Aérea</span>
+    </button>
+    <span class="dock-sep"></span>
+    <button class="tool-btn" id="btn-rotate" title="Auto-rotar">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+      <span>Rotar</span>
+    </button>
+    <button class="tool-btn" id="btn-wireframe" title="Modo malla">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 7v10l10 5 10-5V7"/><line x1="12" y1="12" x2="12" y2="22"/></svg>
+      <span>Malla</span>
+    </button>
+    <button class="tool-btn" id="btn-light" title="Alternar iluminación">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <span id="light-label">Día</span>
+    </button>
+    <span class="dock-sep"></span>
+    <button class="tool-btn" id="btn-fullscreen" title="Pantalla completa">
+      <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    </button>
   </div>
 
-  <!-- Mouse / Touch Help -->
-  <div class="help-card">
-    <div>🖱️ <b>Girar:</b> Clic izquierdo + arrastrar</div>
-    <div>✋ <b>Mover:</b> Clic derecho + arrastrar</div>
-    <div>🔍 <b>Zoom:</b> Rueda del mouse / Pellizcar</div>
-  </div>
-
-  <!-- Loading Screen -->
+  <!-- Minimalist Loading Screen -->
   <div id="loader">
-    <div class="spinner"></div>
-    <div class="loading-status" id="load-text">Cargando modelo 3D...</div>
+    <div class="loader-mark">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="loader-title">Campus UNAL</div>
+    <div class="loading-status" id="load-text">Preparando entorno 3D</div>
     <div class="progress-bar-container">
       <div class="progress-bar" id="load-bar"></div>
     </div>
-    <div class="loading-details" id="load-details">Descargando geometría y texturas</div>
+    <div class="loading-details" id="load-details">0%</div>
   </div>
 
   <!-- Fallback Drop Prompt (if Unal.glb is not present yet) -->
@@ -342,7 +446,7 @@
     function init() {
       // 1. Scene
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x0f172a);
+      scene.background = new THREE.Color(0x090d16);
 
       // 2. Camera
       camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000000);
@@ -452,24 +556,25 @@
 
       btnLight.addEventListener('click', () => {
         lightMode = (lightMode + 1) % 3;
+        const lbl = document.getElementById('light-label');
         if (lightMode === 0) { // Day
-          scene.background.setHex(0x0f172a);
+          scene.background.setHex(0x090d16);
           dirLight.color.setHex(0xfffaed);
           dirLight.intensity = 1.4;
           hemiLight.intensity = 0.7;
-          btnLight.innerText = '☀️ Luz Día';
+          lbl.innerText = 'Día';
         } else if (lightMode === 1) { // Sunset
-          scene.background.setHex(0x271924);
+          scene.background.setHex(0x1f141e);
           dirLight.color.setHex(0xff9a5c);
           dirLight.intensity = 1.6;
           hemiLight.intensity = 0.5;
-          btnLight.innerText = '🌅 Atardecer';
+          lbl.innerText = 'Tarde';
         } else { // Dark / Night
           scene.background.setHex(0x020617);
           dirLight.color.setHex(0x7dd3fc);
           dirLight.intensity = 0.4;
           hemiLight.intensity = 0.3;
-          btnLight.innerText = '🌙 Noche';
+          lbl.innerText = 'Noche';
         }
       });
 
